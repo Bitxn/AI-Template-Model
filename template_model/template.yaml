@@ -1,0 +1,65 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Template Structure Model API — Serverless FastAPI on Lambda
+
+Globals:
+  Function:
+    Timeout: 60
+    MemorySize: 512
+    Runtime: python3.12
+    Environment:
+      Variables:
+        ANTHROPIC_API_KEY: !Ref AnthropicApiKey
+        ALLOWED_ORIGINS: !Ref AllowedOrigins
+
+Parameters:
+  AnthropicApiKey:
+    Type: String
+    NoEcho: true
+    Description: Your Anthropic API key
+
+  AllowedOrigins:
+    Type: String
+    Default: "*"
+    Description: Comma-separated CORS allowed origins
+
+Resources:
+  TemplateModelFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: template-model-api
+      Handler: app.main.handler
+      CodeUri: .
+      Description: Analyzes prompts and returns project folder tree JSON
+      Events:
+        GenerateTree:
+          Type: Api
+          Properties:
+            Path: /generate-tree
+            Method: post
+            RestApiId: !Ref TemplateModelApi
+        Health:
+          Type: Api
+          Properties:
+            Path: /health
+            Method: get
+            RestApiId: !Ref TemplateModelApi
+
+  TemplateModelApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      Name: template-model-api
+      StageName: prod
+      Cors:
+        AllowMethods: "'POST,GET,OPTIONS'"
+        AllowHeaders: "'Content-Type,Authorization'"
+        AllowOrigin: "'*'"
+
+Outputs:
+  ApiEndpoint:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${TemplateModelApi}.execute-api.${AWS::Region}.amazonaws.com/prod"
+  FunctionArn:
+    Description: "Lambda Function ARN"
+    Value: !GetAtt TemplateModelFunction.Arn

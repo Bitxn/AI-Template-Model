@@ -1,0 +1,11 @@
+.env
+*.jsonl
+checkpoint.json
+pipeline.log
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.db
+.history/
+*.example
